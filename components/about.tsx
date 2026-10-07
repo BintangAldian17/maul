@@ -138,15 +138,48 @@ function MobileLabel({
 export default function About({ images }: { images: AboutImages }) {
   const pinWrap = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
+  const bio = useRef<HTMLElement>(null);
+
+  useLayoutEffect(() => {
+    if (!bio.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const context = gsap.context(() => {
+      gsap.timeline({ defaults: { ease: "expo.out", duration: 1.4 }, scrollTrigger: { trigger: bio.current, start: "top 65%", once: true } })
+        .from("[data-bio-rule]", { scaleX: 0, transformOrigin: "left center", duration: 1.6 })
+        .from("[data-bio-text]", { autoAlpha: 0, y: 24 }, "<0.2")
+        .from("[data-bio-fact]", { autoAlpha: 0, y: 16, duration: 1.2, stagger: 0.1 }, "<0.15");
+    }, bio);
+    return () => context.revert();
+  }, []);
 
   useLayoutEffect(() => {
     const pin = pinWrap.current;
     if (!pin) return;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    // Touch: iOS momentum keeps scrolling after the finger lifts and can't be
+    // preventDefault-ed, so the step lock gets flung straight through. Drive the
+    // steps from native scroll progress instead, snapping to each one.
+    if (window.matchMedia("(pointer: coarse)").matches) {
+      const last = steps.length - 1;
+      const touchLock = ScrollTrigger.create({
+        id: "about-steps",
+        trigger: pin,
+        start: "top top",
+        end: `+=${steps.length * 75}%`,
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        snap: { snapTo: 1 / last, duration: { min: 0.2, max: 0.6 }, delay: 0.05, ease: "power2.inOut" },
+        onUpdate: (self) => setActive(Math.round(self.progress * last)),
+      });
+      return () => touchLock.kill();
+    }
+
     const cooldown = motion.matches ? 0 : STEP_COOLDOWN;
     let current = 0;
     let readyAt = 0;
     let bypassUntil = 0;
+    let anchor = 0;
 
     // Step past either end: hand scrolling back by moving clear of the pin.
     const leave = (direction: number) => {
@@ -199,9 +232,19 @@ export default function About({ images }: { images: AboutImages }) {
         if (performance.now() < bypassUntil) return;
         current = self.direction < 0 ? steps.length - 1 : 0;
         setActive(current);
+        // Park just inside the edge we came through; the stage is pinned, so
+        // this is invisible.
+        anchor = self.direction < 0 ? self.end - 1 : self.start + 1;
+        self.scroll(anchor);
         // Let the gesture that carried us in finish before the first step.
         readyAt = performance.now() + cooldown;
         observer.enable();
+      },
+      // Chrome keeps animating a smooth-scroll from wheel ticks that landed
+      // before the lock engaged; a fast flick could drift through the whole pin
+      // and drop the remaining steps. Hold the page still while locked.
+      onUpdate: (self) => {
+        if (observer.isEnabled && Math.abs(self.scroll() - anchor) > 1) self.scroll(anchor);
       },
     });
 
@@ -295,14 +338,16 @@ export default function About({ images }: { images: AboutImages }) {
         </div>
       </section>
       <section
+        ref={bio}
         aria-labelledby="about-biography"
         className="relative bg-ink px-[clamp(18px,3.4vw,54px)] pb-[clamp(72px,10vw,150px)] pt-[clamp(56px,8vw,110px)] text-paper"
       >
         <h2 id="about-biography" className="sr-only">
           About Maulana Rizky
         </h2>
-        <div className="mx-auto grid max-w-[1160px] gap-[clamp(42px,7vw,90px)] border-t border-paper/15 pt-[clamp(30px,4vw,52px)] min-[821px]:grid-cols-[1.06fr_1fr]">
-          <p className="m-0 max-w-[680px] font-display text-[clamp(1.5rem,2.5vw,2.15rem)] leading-[1.42] tracking-[-.012em] text-paper/90">
+        <div className="relative mx-auto grid max-w-[1160px] gap-[clamp(42px,7vw,90px)] pt-[clamp(30px,4vw,52px)] min-[821px]:grid-cols-[1.06fr_1fr]">
+          <i data-bio-rule aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-paper/15" />
+          <p data-bio-text className="m-0 max-w-[680px] font-display text-[clamp(1.5rem,2.5vw,2.15rem)] leading-[1.42] tracking-[-.012em] text-paper/90">
             Maulana Rizky is a visual designer and photographer based in
             Indonesia. His practice moves between graphic design, photography,
             image-making and motion. He is interested in creating work that is
@@ -312,6 +357,7 @@ export default function About({ images }: { images: AboutImages }) {
             {facts.map(([label, value]) => (
               <div
                 key={label}
+                data-bio-fact
                 className="grid gap-2 border-b border-paper/15 py-4 min-[481px]:grid-cols-[118px_1fr] min-[481px]:gap-4"
               >
                 <dt className="pt-0.5 text-[10px] uppercase tracking-[.16em] text-paper/45">
@@ -322,7 +368,7 @@ export default function About({ images }: { images: AboutImages }) {
                 </dd>
               </div>
             ))}
-            <div className="grid gap-2 border-b border-paper/15 py-4 min-[481px]:grid-cols-[118px_1fr] min-[481px]:gap-4">
+            <div data-bio-fact className="grid gap-2 border-b border-paper/15 py-4 min-[481px]:grid-cols-[118px_1fr] min-[481px]:gap-4">
               <dt className="pt-0.5 text-[10px] uppercase tracking-[.16em] text-paper/45">
                 Email
               </dt>
