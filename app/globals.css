@@ -1,0 +1,53 @@
+@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Inter:wght@400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #f2f0ea;
+  --color-ink: #15130f;
+  --color-muted: #8b867c;
+  --color-faint: #b8b3a8;
+  --font-display: "Bodoni Moda", Didot, "Times New Roman", serif;
+}
+
+@layer base {
+  body { font-family: Inter, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, var(--hero-float-amp, -7px), 0) rotate(var(--hero-float-wobble, .4deg)); }
+}
+
+@media (max-width: 860px) {
+  [style*="--hero-float-duration"] { --hero-float-amp: -13px; }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translateY(-3px); }
+  50% { transform: translateY(4px); }
+}
+
+@keyframes img-in {
+  from { clip-path: inset(0 0 100% 0); opacity: 0; transform: translateY(12px); }
+  to { clip-path: inset(0); opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rise {
+  from { transform: translateY(105%); }
+  to { transform: translateY(0); }
+}
+
+html[data-about-intro="true"] .about-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 4;
+  opacity: var(--about-intro-opacity, 0);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-stage * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

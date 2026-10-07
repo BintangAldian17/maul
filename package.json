@@ -1,0 +1,25 @@
+{
+  "name": "maulana-rizky-portfolio",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node node_modules/next/dist/bin/next dev",
+    "build": "node node_modules/next/dist/bin/next build",
+    "start": "node node_modules/next/dist/bin/next start"
+  },
+  "dependencies": {
+    "gsap": "^3.14.2",
+    "next": "^16.1.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.1.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.0"
+  }
+}
